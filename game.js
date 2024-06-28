@@ -176,8 +176,8 @@ const ColorCascadePuzzle = () => {
 
   const renderMenu = () => (
     <div className="flex flex-col items-center justify-center h-full">
-      <h1 className="text-5xl font-bold mb-6 text-gradient">Color Cascade</h1>
-      <p className="text-xl mb-8 opacity-80">Fill the grid with a single color in limited moves!</p>
+      <h1 className="text-5xl font-bold mb-6 text-gradient">Sean's Colour Cascade</h1>
+      <p className="text-xl mb-8 opacity-80">Fill the grid with a single colour in limited moves!</p>
       <Button 
         onClick={initializeGame}
         className="px-8 py-4 text-lg bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 transition-all duration-300"
