@@ -153,7 +153,7 @@ const ColorCascadePuzzle = () => {
       <div className="flex justify-between mb-4">
         <div className="text-left">
           <p className="text-xl font-bold">Level: {level}</p>
-          <p className="text-lg">Moves left: {moves}</p>
+          <p className="text-lg">Move(s) left: {moves}</p>
         </div>
         <div className="text-right">
           <p className="text-xl font-bold">Score: {score}</p>
@@ -193,7 +193,7 @@ const ColorCascadePuzzle = () => {
         <AlertDialogHeader>
           <AlertDialogTitle className="text-2xl font-bold">Level {level} Complete!</AlertDialogTitle>
           <AlertDialogDescription className="text-lg opacity-80">
-            Great job! You've completed the level with {moves} moves left.
+            Great job! You've completed the level with {moves} move(s) left.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
