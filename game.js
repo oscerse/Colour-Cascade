@@ -71,6 +71,7 @@ const [showingScore, setShowingScore] = useState(false);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [gameState, grid]);
 
+  
   const floodFill = (newColor) => {
   if (moves <= 0) return;
 
@@ -94,24 +95,25 @@ const [showingScore, setShowingScore] = useState(false);
     stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
   }
 
+  const newScore = score + changedCells;
   setGrid(newGrid);
   setMoves(moves - 1);
-  setBaseScore(baseScore + changedCells);
+  setScore(newScore);
 
   if (newGrid.every(row => row.every(cell => cell === newColor))) {
-  setCompletionColor(newColor);
-  const moveRemainingBonus = (MAX_MOVES - (moves - 1)) * 25;
-  setMoveRemainingBonus(moveRemainingBonus);
-  setTimeout(() => {
-    setGameState('levelComplete');
-    setShowingScore(true);
-  }, 2000);
-} else if (moves <= 1) {
-  setGameOverAnimation(true);
-  setTimeout(() => {
-    setGameState('gameOver');
-  }, 2000);
-}
+    setCompletionColor(newColor);
+    const moveRemainingBonus = moves * 25;
+    setMoveRemainingBonus(moveRemainingBonus);
+    setTimeout(() => {
+      setGameState('levelComplete');
+      setShowingScore(true);
+    }, 2000);
+  } else if (moves <= 1) {
+    setGameOverAnimation(true);
+    setTimeout(() => {
+      setGameState('gameOver');
+    }, 2000);
+  }
 };
 
   const nextLevel = () => {
@@ -126,37 +128,38 @@ const [showingScore, setShowingScore] = useState(false);
 };
 
   const renderGrid = () => (
-    <div 
-      className="grid gap-0.5" 
-      style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
-    >
-      {grid.map((row, rowIndex) => 
-        row.map((color, colIndex) => {
-          const index = rowIndex * GRID_SIZE + colIndex;
-          const completionDelay = completionColor ? (rowIndex + colIndex) * 50 : 0;
-          const fallDelay = gameOverAnimation ? ((2 * GRID_SIZE) - (rowIndex + colIndex)) * 50 : 0;
-          return (
-            <div 
-              key={`${rowIndex}-${colIndex}`}
-              className={`aspect-square rounded-sm relative ${index === 0 ? 'ring-2 ring-white' : ''} 
-                ${completionColor ? 'animate-flip' : ''} 
-                ${gameOverAnimation ? 'animate-fall' : ''}`}
-              style={{ 
-                backgroundColor: color,
-                animationDelay: `${completionDelay}ms, ${fallDelay}ms`,
-              }}
-            >
-              {index === 0 && (
-                <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                  Start
-                </div>
-              )}
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
+  <div 
+    className="grid gap-0.5" 
+    style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
+  >
+    {grid.map((row, rowIndex) => 
+      row.map((color, colIndex) => {
+        const index = rowIndex * GRID_SIZE + colIndex;
+        const completionDelay = completionColor ? (rowIndex + colIndex) * 50 : 0;
+        const fallDelay = gameOverAnimation ? ((2 * GRID_SIZE) - (rowIndex + colIndex)) * 50 : 0;
+        const showStart = index === 0 && !completionColor && !gameOverAnimation;
+        return (
+          <div 
+            key={`${rowIndex}-${colIndex}`}
+            className={`aspect-square rounded-sm relative ${index === 0 ? 'ring-2 ring-white' : ''} 
+              ${completionColor ? 'animate-flip' : ''} 
+              ${gameOverAnimation ? 'animate-fall' : ''}`}
+            style={{ 
+              backgroundColor: color,
+              animationDelay: `${completionDelay}ms, ${fallDelay}ms`,
+            }}
+          >
+            {showStart && (
+              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
+                Start
+              </div>
+            )}
+          </div>
+        );
+      })
+    )}
+  </div>
+);
 
   const renderGameInfo = () => (
     <div className="mt-4 text-center">
@@ -285,44 +288,43 @@ const [showingScore, setShowingScore] = useState(false);
 };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-      <div ref={containerRef} className="w-full max-w-3xl aspect-square">
-        <div className="p-4 rounded-lg shadow-2xl bg-gray-800 border border-gray-700 h-full flex flex-col">
-          {gameState === 'menu' ? renderMenu() : (
-            <>
-              <div className="flex-grow">{renderGrid()}</div>
-              {renderGameInfo()}
-            </>
-          )}
-          {renderLevelComplete()}
-          {renderGameOver()}
-        </div>
+  <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+    <div ref={containerRef} className="w-full max-w-3xl aspect-square">
+      <div className="p-4 rounded-lg shadow-2xl bg-gray-800 border border-gray-700 h-full flex flex-col">
+        {gameState === 'menu' ? renderMenu() : (
+          <>
+            <div className="flex-grow">{renderGrid()}</div>
+            {renderGameInfo()}
+          </>
+        )}
+        {renderLevelComplete()}
+        {renderGameOver()}
       </div>
-      <style jsx global>{`
-        .text-gradient {
-          background: linear-gradient(to right, #FF6B6B, #2ecc71, #3498db, #FED766, #8A4FFF);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        @keyframes flip {
-          0% { transform: perspective(400px) rotateY(0); }
-          100% { transform: perspective(400px) rotateY(180deg); }
-        }
-        .animate-flip {
-          animation: flip 0.6s ease-out forwards;
-          animation-delay: var(--delay, 0ms);
-        }
-        @keyframes fall {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(100%) rotate(20deg); opacity: 0; }
-        }
-        .animate-fall {
-          animation: fall 0.6s ease-in forwards;
-          animation-delay: var(--delay, 0ms);
-        }
-      `}</style>
     </div>
-  );
-};
+    <style jsx global>{`
+      .text-gradient {
+        background: linear-gradient(to right, #FF6B6B, #2ecc71, #3498db, #FED766, #8A4FFF);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      @keyframes flip {
+        0% { transform: perspective(400px) rotateY(0); }
+        100% { transform: perspective(400px) rotateY(180deg); }
+      }
+      .animate-flip {
+        animation: flip 0.6s ease-out forwards;
+        animation-delay: var(--delay, 0ms);
+      }
+      @keyframes fall {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100%) rotate(20deg); opacity: 0; }
+      }
+      .animate-fall {
+        animation: fall 0.6s ease-in forwards;
+        animation-delay: var(--delay, 0ms);
+      }
+    `}</style>
+  </div>
+);
 
 ReactDOM.render(<ColorCascadePuzzle />, document.getElementById('root'));
