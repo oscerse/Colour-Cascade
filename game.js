@@ -53,23 +53,34 @@ const ColorCascadePuzzle = () => {
   const [completionColor, setCompletionColor] = useState(null);
   const [gameOverAnimation, setGameOverAnimation] = useState(false);
   const containerRef = useRef(null);
+  const [par, setPar] = useState(0);
+const [baseScore, setBaseScore] = useState(0);
+const [speedBonus, setSpeedBonus] = useState(0);
+const [parBonus, setParBonus] = useState(0);
+const [showingScore, setShowingScore] = useState(false);
 
   const initializeGrid = () => {
-    const newGrid = Array(GRID_SIZE).fill().map(() => 
-      Array(GRID_SIZE).fill().map(() => COLORS[Math.floor(Math.random() * COLORS.length)])
-    );
-    setGrid(newGrid);
-  };
+  const newGrid = Array(GRID_SIZE).fill().map(() => 
+    Array(GRID_SIZE).fill().map(() => COLORS[Math.floor(Math.random() * COLORS.length)])
+  );
+  setGrid(newGrid);
+  const estimatedPar = estimatePar(newGrid);
+  setPar(estimatedPar);
+};
 
   const initializeGame = () => {
-    initializeGrid();
-    setMoves(MAX_MOVES);
-    setScore(0);
-    setGameState('playing');
-    setLevel(1);
-    setCompletionColor(null);
-    setGameOverAnimation(false);
-  };
+  initializeGrid();
+  setMoves(MAX_MOVES);
+  setScore(0);
+  setBaseScore(0);
+  setSpeedBonus(0);
+  setParBonus(0);
+  setGameState('playing');
+  setLevel(1);
+  setCompletionColor(null);
+  setGameOverAnimation(false);
+  setShowingScore(false);
+};
 
   useEffect(() => {
     const handleKeyPress = (e) => {
@@ -87,54 +98,64 @@ const ColorCascadePuzzle = () => {
   }, [gameState, grid]);
 
   const floodFill = (newColor) => {
-    if (moves <= 0) return;
+  if (moves <= 0) return;
 
-    const startColor = grid[0][0];
-    if (startColor === newColor) return;
+  const startColor = grid[0][0];
+  if (startColor === newColor) return;
 
-    const newGrid = grid.map(row => [...row]);
-    const stack = [[0, 0]];
-    let changedCells = 0;
+  const newGrid = grid.map(row => [...row]);
+  const stack = [[0, 0]];
+  let changedCells = 0;
 
-    while (stack.length > 0) {
-      const [x, y] = stack.pop();
+  while (stack.length > 0) {
+    const [x, y] = stack.pop();
 
-      if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE || newGrid[y][x] !== startColor) {
-        continue;
-      }
-
-      newGrid[y][x] = newColor;
-      changedCells++;
-
-      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE || newGrid[y][x] !== startColor) {
+      continue;
     }
 
-    setGrid(newGrid);
-    setMoves(moves - 1);
-    setScore(score + changedCells);
+    newGrid[y][x] = newColor;
+    changedCells++;
 
-    if (newGrid.every(row => row.every(cell => cell === newColor))) {
-      setCompletionColor(newColor);
-      setTimeout(() => {
-        setGameState('levelComplete');
-        setHighScore(Math.max(highScore, score + changedCells));
-      }, 2000);
-    } else if (moves <= 1) {
-      setGameOverAnimation(true);
-      setTimeout(() => {
-        setGameState('gameOver');
-        setHighScore(Math.max(highScore, score + changedCells));
-      }, 2000);
-    }
-  };
+    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+
+  setGrid(newGrid);
+  setMoves(moves - 1);
+  setBaseScore(baseScore + changedCells);
+
+  if (newGrid.every(row => row.every(cell => cell === newColor))) {
+    setCompletionColor(newColor);
+    const speedBonus = (MAX_MOVES - (moves - 1)) * 25;
+    const parBonus = moves > par ? 0 : moves === par ? 100 : 250;
+    setSpeedBonus(speedBonus);
+    setParBonus(parBonus);
+    setScore(score + baseScore + speedBonus + parBonus);
+    setTimeout(() => {
+      setGameState('levelComplete');
+      setShowingScore(true);
+      setHighScore(Math.max(highScore, score + baseScore + speedBonus + parBonus));
+    }, 2000);
+  } else if (moves <= 1) {
+    setGameOverAnimation(true);
+    setTimeout(() => {
+      setGameState('gameOver');
+      setHighScore(Math.max(highScore, score + baseScore));
+    }, 2000);
+  }
+};
 
   const nextLevel = () => {
-    setLevel(level + 1);
-    initializeGrid();
-    setMoves(Math.max(MAX_MOVES - level * 2, 10));
-    setGameState('playing');
-    setCompletionColor(null);
-  };
+  setLevel(level + 1);
+  initializeGrid();
+  setMoves(MAX_MOVES);
+  setBaseScore(0);
+  setSpeedBonus(0);
+  setParBonus(0);
+  setGameState('playing');
+  setCompletionColor(null);
+  setShowingScore(false);
+};
 
   const renderGrid = () => (
     <div 
@@ -209,22 +230,33 @@ const ColorCascadePuzzle = () => {
   );
 
   const renderLevelComplete = () => (
-    <AlertDialog open={gameState === 'levelComplete'}>
-      <AlertDialogContent className="bg-gray-800 text-white">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-2xl font-bold">Level {level} Complete!</AlertDialogTitle>
-          <AlertDialogDescription className="text-lg opacity-80">
-            Great job! You've completed the level with {moves} move(s) left.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
+  <AlertDialog open={gameState === 'levelComplete'}>
+    <AlertDialogContent className="bg-gray-800 text-white">
+      <AlertDialogHeader>
+        <AlertDialogTitle className="text-2xl font-bold">Level {level} Complete!</AlertDialogTitle>
+        <AlertDialogDescription className="text-lg opacity-80">
+          {showingScore ? (
+            <div className="space-y-2">
+              <p>Base Score: <AnimatedNumber value={baseScore} /></p>
+              <p>Speed Bonus: <AnimatedNumber value={speedBonus} /></p>
+              <p>Under Par Bonus: <AnimatedNumber value={parBonus} /></p>
+              <p className="font-bold mt-4">Total Score: <AnimatedNumber value={score} /></p>
+            </div>
+          ) : (
+            <p>Calculating score...</p>
+          )}
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        {showingScore && (
           <AlertDialogAction onClick={nextLevel} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
             Next Level
           </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+        )}
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+);
 
   const renderGameOver = () => (
     <AlertDialog open={gameState === 'gameOver'}>
@@ -247,6 +279,26 @@ const ColorCascadePuzzle = () => {
       </AlertDialogContent>
     </AlertDialog>
   );
+
+       const AnimatedNumber = ({ value }) => {
+  const [displayValue, setDisplayValue] = useState(0);
+  
+  useEffect(() => {
+    let start = 0;
+    const end = parseInt(value);
+    if (start === end) return;
+
+    let timer = setInterval(() => {
+      start += 1;
+      setDisplayValue(start);
+      if (start === end) clearInterval(timer);
+    }, 10);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <span>{displayValue}</span>;
+};      
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
