@@ -53,10 +53,8 @@ const ColorCascadePuzzle = () => {
   const [completionColor, setCompletionColor] = useState(null);
   const [gameOverAnimation, setGameOverAnimation] = useState(false);
   const containerRef = useRef(null);
-  const [par, setPar] = useState(0);
 const [baseScore, setBaseScore] = useState(0);
 const [speedBonus, setSpeedBonus] = useState(0);
-const [parBonus, setParBonus] = useState(0);
 const [showingScore, setShowingScore] = useState(false);
 
   const initializeGrid = () => {
@@ -64,8 +62,6 @@ const [showingScore, setShowingScore] = useState(false);
     Array(GRID_SIZE).fill().map(() => COLORS[Math.floor(Math.random() * COLORS.length)])
   );
   setGrid(newGrid);
-  const estimatedPar = estimatePar(newGrid);
-  setPar(estimatedPar);
 };
 
   const initializeGame = () => {
@@ -74,7 +70,6 @@ const [showingScore, setShowingScore] = useState(false);
   setScore(0);
   setBaseScore(0);
   setSpeedBonus(0);
-  setParBonus(0);
   setGameState('playing');
   setLevel(1);
   setCompletionColor(null);
@@ -125,24 +120,22 @@ const [showingScore, setShowingScore] = useState(false);
   setBaseScore(baseScore + changedCells);
 
   if (newGrid.every(row => row.every(cell => cell === newColor))) {
-    setCompletionColor(newColor);
-    const speedBonus = (MAX_MOVES - (moves - 1)) * 25;
-    const parBonus = moves > par ? 0 : moves === par ? 100 : 250;
-    setSpeedBonus(speedBonus);
-    setParBonus(parBonus);
-    setScore(score + baseScore + speedBonus + parBonus);
-    setTimeout(() => {
-      setGameState('levelComplete');
-      setShowingScore(true);
-      setHighScore(Math.max(highScore, score + baseScore + speedBonus + parBonus));
-    }, 2000);
-  } else if (moves <= 1) {
-    setGameOverAnimation(true);
-    setTimeout(() => {
-      setGameState('gameOver');
-      setHighScore(Math.max(highScore, score + baseScore));
-    }, 2000);
-  }
+  setCompletionColor(newColor);
+  const speedBonus = (MAX_MOVES - (moves - 1)) * 25;
+  setSpeedBonus(speedBonus);
+  setScore(score + baseScore + speedBonus);
+  setTimeout(() => {
+    setGameState('levelComplete');
+    setShowingScore(true);
+    setHighScore(Math.max(highScore, score + baseScore + speedBonus));
+  }, 2000);
+} else if (moves <= 1) {
+  setGameOverAnimation(true);
+  setTimeout(() => {
+    setGameState('gameOver');
+    setHighScore(Math.max(highScore, score + baseScore));
+  }, 2000);
+}
 };
 
   const nextLevel = () => {
@@ -151,7 +144,6 @@ const [showingScore, setShowingScore] = useState(false);
   setMoves(MAX_MOVES);
   setBaseScore(0);
   setSpeedBonus(0);
-  setParBonus(0);
   setGameState('playing');
   setCompletionColor(null);
   setShowingScore(false);
@@ -239,7 +231,6 @@ const [showingScore, setShowingScore] = useState(false);
             <div className="space-y-2">
               <p>Base Score: <AnimatedNumber value={baseScore} /></p>
               <p>Speed Bonus: <AnimatedNumber value={speedBonus} /></p>
-              <p>Under Par Bonus: <AnimatedNumber value={parBonus} /></p>
               <p className="font-bold mt-4">Total Score: <AnimatedNumber value={score} /></p>
             </div>
           ) : (
