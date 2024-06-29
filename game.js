@@ -33,7 +33,7 @@ const ColorCascadePuzzle = () => {
   const [gameOverAnimation, setGameOverAnimation] = useState(false);
   const containerRef = useRef(null);
 const [baseScore, setBaseScore] = useState(0);
-const [moveRaminingBonus, setmoveRaminingBonus] = useState(0);
+const [moveRemainingBonus, setMoveRemainingBonus] = useState(0);
 const [showingScore, setShowingScore] = useState(false);
 
   const initializeGrid = () => {
@@ -48,7 +48,7 @@ const [showingScore, setShowingScore] = useState(false);
   setMoves(MAX_MOVES);
   setScore(0);
   setBaseScore(0);
-  setmoveRaminingBonus(0);
+  setMoveRemainingBonus(0);
   setGameState('playing');
   setLevel(1);
   setCompletionColor(null);
@@ -200,6 +200,31 @@ const [showingScore, setShowingScore] = useState(false);
     </div>
   );
 
+const AnimatedNumber = ({ value, duration, onComplete }) => {
+  const [displayValue, setDisplayValue] = useState(value);
+  
+  useEffect(() => {
+    const steps = 60 * (duration / 1000); // 60 fps
+    const step = value / steps;
+
+    let current = value;
+    const timer = setInterval(() => {
+      current -= step;
+      if (current <= 0) {
+        clearInterval(timer);
+        setDisplayValue(0);
+        onComplete && onComplete();
+      } else {
+        setDisplayValue(Math.round(current));
+      }
+    }, 1000 / 60);
+
+    return () => clearInterval(timer);
+  }, [value, duration, onComplete]);
+
+  return <span>{displayValue}</span>;
+};
+
   const renderLevelComplete = () => {
   const [animationComplete, setAnimationComplete] = useState(false);
   const moveRemainingBonus = (MAX_MOVES - moves) * 25;
@@ -261,31 +286,6 @@ const [showingScore, setShowingScore] = useState(false);
       </AlertDialogContent>
     </AlertDialog>
   );
-
-       const AnimatedNumber = ({ value, duration, onComplete }) => {
-  const [displayValue, setDisplayValue] = useState(value);
-  
-  useEffect(() => {
-    const steps = 60 * (duration / 1000); // 60 fps
-    const step = value / steps;
-
-    let current = value;
-    const timer = setInterval(() => {
-      current -= step;
-      if (current <= 0) {
-        clearInterval(timer);
-        setDisplayValue(0);
-        onComplete && onComplete();
-      } else {
-        setDisplayValue(Math.round(current));
-      }
-    }, 1000 / 60);
-
-    return () => clearInterval(timer);
-  }, [value, duration, onComplete]);
-
-  return <span>{displayValue}</span>;
-};
 
   return (
   <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
