@@ -33,7 +33,7 @@ const ColorCascadePuzzle = () => {
   const [gameOverAnimation, setGameOverAnimation] = useState(false);
   const containerRef = useRef(null);
 const [baseScore, setBaseScore] = useState(0);
-const [speedBonus, setSpeedBonus] = useState(0);
+const [moveRaminingBonus, setmoveRaminingBonus] = useState(0);
 const [showingScore, setShowingScore] = useState(false);
 
   const initializeGrid = () => {
@@ -48,7 +48,7 @@ const [showingScore, setShowingScore] = useState(false);
   setMoves(MAX_MOVES);
   setScore(0);
   setBaseScore(0);
-  setSpeedBonus(0);
+  setmoveRaminingBonus(0);
   setGameState('playing');
   setLevel(1);
   setCompletionColor(null);
@@ -100,29 +100,26 @@ const [showingScore, setShowingScore] = useState(false);
 
   if (newGrid.every(row => row.every(cell => cell === newColor))) {
   setCompletionColor(newColor);
-  const speedBonus = (MAX_MOVES - (moves - 1)) * 25;
-  setSpeedBonus(speedBonus);
-  setScore(score + baseScore + speedBonus);
+  const moveRemainingBonus = (MAX_MOVES - (moves - 1)) * 25;
+  setMoveRemainingBonus(moveRemainingBonus);
   setTimeout(() => {
     setGameState('levelComplete');
     setShowingScore(true);
-    setHighScore(Math.max(highScore, score + baseScore + speedBonus));
   }, 2000);
 } else if (moves <= 1) {
   setGameOverAnimation(true);
   setTimeout(() => {
     setGameState('gameOver');
-    setHighScore(Math.max(highScore, score + baseScore));
   }, 2000);
 }
 };
 
   const nextLevel = () => {
+  setScore(score + moveRemainingBonus);
   setLevel(level + 1);
   initializeGrid();
   setMoves(MAX_MOVES);
-  setBaseScore(0);
-  setSpeedBonus(0);
+  setMoveRemainingBonus(0);
   setGameState('playing');
   setCompletionColor(null);
   setShowingScore(false);
@@ -201,18 +198,8 @@ const [showingScore, setShowingScore] = useState(false);
   );
 
   const renderLevelComplete = () => {
-  const [animationStage, setAnimationStage] = useState(0);
-
-  useEffect(() => {
-    if (showingScore) {
-      // Start Level Score animation
-      setAnimationStage(1);
-      // After 2 seconds, start Speed Bonus animation
-      setTimeout(() => setAnimationStage(2), 2000);
-      // After 3 seconds (2s + 1s), show continue button
-      setTimeout(() => setAnimationStage(3), 3000);
-    }
-  }, [showingScore]);
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const moveRemainingBonus = (MAX_MOVES - moves) * 25;
 
   return (
     <AlertDialog open={gameState === 'levelComplete'}>
@@ -220,26 +207,26 @@ const [showingScore, setShowingScore] = useState(false);
         <AlertDialogHeader>
           <AlertDialogTitle className="text-2xl font-bold">Level {level} Complete!</AlertDialogTitle>
           <AlertDialogDescription className="text-lg opacity-80">
-            {showingScore ? (
-              <div className="space-y-2">
-                <p>Level Score: <AnimatedNumber value={baseScore} duration={2000} countUp={false} /></p>
-                {animationStage > 1 && (
-                  <p>Speed Bonus: <AnimatedNumber value={speedBonus} duration={1000} /></p>
-                )}
-                <p className="font-bold mt-4">
-                  Total Score: <AnimatedNumber 
-                    value={animationStage === 1 ? baseScore : score} 
-                    duration={animationStage === 1 ? 2000 : 1000} 
+            <div className="space-y-2">
+              <p className="font-bold">Total Score: {score}</p>
+              {moveRemainingBonus > 0 && (
+                <p>
+                  Moves Remaining Bonus: {moves} x 25 = 
+                  <AnimatedNumber 
+                    value={moveRemainingBonus} 
+                    duration={2000}
+                    onComplete={() => setAnimationComplete(true)}
                   />
                 </p>
-              </div>
-            ) : (
-              <p>Calculating score...</p>
-            )}
+              )}
+              <p className="font-bold mt-4">
+                New Total: {animationComplete ? score + moveRemainingBonus : score}
+              </p>
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          {animationStage === 3 && (
+          {animationComplete && (
             <AlertDialogAction onClick={nextLevel} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
               Next Level
             </AlertDialogAction>
@@ -272,31 +259,30 @@ const [showingScore, setShowingScore] = useState(false);
     </AlertDialog>
   );
 
-       const AnimatedNumber = ({ value, duration, countUp = true }) => {
-  const [displayValue, setDisplayValue] = useState(countUp ? 0 : value);
+       const AnimatedNumber = ({ value, duration, onComplete }) => {
+  const [displayValue, setDisplayValue] = useState(value);
   
   useEffect(() => {
-    const start = countUp ? 0 : value;
-    const end = countUp ? value : 0;
     const steps = 60 * (duration / 1000); // 60 fps
-    const step = (end - start) / steps;
+    const step = value / steps;
 
-    let current = start;
+    let current = value;
     const timer = setInterval(() => {
-      current += step;
-      if ((countUp && current >= end) || (!countUp && current <= end)) {
+      current -= step;
+      if (current <= 0) {
         clearInterval(timer);
-        setDisplayValue(end);
+        setDisplayValue(0);
+        onComplete && onComplete();
       } else {
         setDisplayValue(Math.round(current));
       }
     }, 1000 / 60);
 
     return () => clearInterval(timer);
-  }, [value, duration, countUp]);
+  }, [value, duration, onComplete]);
 
   return <span>{displayValue}</span>;
-};   
+};
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
