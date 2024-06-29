@@ -9,27 +9,6 @@ const AlertDialogTitle = ({ children }) => <h2 className="text-xl font-bold mb-2
 const AlertDialogDescription = ({ children }) => <p>{children}</p>;
 const AlertDialogAction = ({ children, ...props }) => <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" {...props}>{children}</button>;
 
-const estimatePar = (grid) => {
-  let par = 0;
-  let currentColor = grid[0][0];
-  
-  while (!grid.every(row => row.every(cell => cell === currentColor))) {
-    const colorCounts = COLORS.map(color => 
-      grid.flat().filter(cell => cell === color).length
-    );
-    const bestColor = COLORS[colorCounts.indexOf(Math.max(...colorCounts))];
-    
-    grid = grid.map(row => row.map(cell => 
-      cell === currentColor ? bestColor : cell
-    ));
-    
-    currentColor = bestColor;
-    par++;
-  }
-
-  return par;
-};
-
 // Simplified Button component
 const Button = React.forwardRef(({ className, ...props }, ref) => (
   <button
