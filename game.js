@@ -200,33 +200,55 @@ const [showingScore, setShowingScore] = useState(false);
     </div>
   );
 
-  const renderLevelComplete = () => (
-  <AlertDialog open={gameState === 'levelComplete'}>
-    <AlertDialogContent className="bg-gray-800 text-white">
-      <AlertDialogHeader>
-        <AlertDialogTitle className="text-2xl font-bold">Level {level} Complete!</AlertDialogTitle>
-        <AlertDialogDescription className="text-lg opacity-80">
-          {showingScore ? (
-            <div className="space-y-2">
-              <p>Base Score: <AnimatedNumber value={baseScore} /></p>
-              <p>Speed Bonus: <AnimatedNumber value={speedBonus} /></p>
-              <p className="font-bold mt-4">Total Score: <AnimatedNumber value={score} /></p>
-            </div>
-          ) : (
-            <p>Calculating score...</p>
+  const renderLevelComplete = () => {
+  const [animationStage, setAnimationStage] = useState(0);
+
+  useEffect(() => {
+    if (showingScore) {
+      // Start Level Score animation
+      setAnimationStage(1);
+      // After 2 seconds, start Speed Bonus animation
+      setTimeout(() => setAnimationStage(2), 2000);
+      // After 3 seconds (2s + 1s), show continue button
+      setTimeout(() => setAnimationStage(3), 3000);
+    }
+  }, [showingScore]);
+
+  return (
+    <AlertDialog open={gameState === 'levelComplete'}>
+      <AlertDialogContent className="bg-gray-800 text-white">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-2xl font-bold">Level {level} Complete!</AlertDialogTitle>
+          <AlertDialogDescription className="text-lg opacity-80">
+            {showingScore ? (
+              <div className="space-y-2">
+                <p>Level Score: <AnimatedNumber value={baseScore} duration={2000} countUp={false} /></p>
+                {animationStage > 1 && (
+                  <p>Speed Bonus: <AnimatedNumber value={speedBonus} duration={1000} /></p>
+                )}
+                <p className="font-bold mt-4">
+                  Total Score: <AnimatedNumber 
+                    value={animationStage === 1 ? baseScore : score} 
+                    duration={animationStage === 1 ? 2000 : 1000} 
+                  />
+                </p>
+              </div>
+            ) : (
+              <p>Calculating score...</p>
+            )}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          {animationStage === 3 && (
+            <AlertDialogAction onClick={nextLevel} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
+              Next Level
+            </AlertDialogAction>
           )}
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        {showingScore && (
-          <AlertDialogAction onClick={nextLevel} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
-            Next Level
-          </AlertDialogAction>
-        )}
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-);
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+};
 
   const renderGameOver = () => (
     <AlertDialog open={gameState === 'gameOver'}>
@@ -250,25 +272,31 @@ const [showingScore, setShowingScore] = useState(false);
     </AlertDialog>
   );
 
-       const AnimatedNumber = ({ value }) => {
-  const [displayValue, setDisplayValue] = useState(0);
+       const AnimatedNumber = ({ value, duration, countUp = true }) => {
+  const [displayValue, setDisplayValue] = useState(countUp ? 0 : value);
   
   useEffect(() => {
-    let start = 0;
-    const end = parseInt(value);
-    if (start === end) return;
+    const start = countUp ? 0 : value;
+    const end = countUp ? value : 0;
+    const steps = 60 * (duration / 1000); // 60 fps
+    const step = (end - start) / steps;
 
-    let timer = setInterval(() => {
-      start += 1;
-      setDisplayValue(start);
-      if (start === end) clearInterval(timer);
-    }, 10);
+    let current = start;
+    const timer = setInterval(() => {
+      current += step;
+      if ((countUp && current >= end) || (!countUp && current <= end)) {
+        clearInterval(timer);
+        setDisplayValue(end);
+      } else {
+        setDisplayValue(Math.round(current));
+      }
+    }, 1000 / 60);
 
     return () => clearInterval(timer);
-  }, [value]);
+  }, [value, duration, countUp]);
 
   return <span>{displayValue}</span>;
-};      
+};   
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
