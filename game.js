@@ -117,14 +117,11 @@ const [showingScore, setShowingScore] = useState(false);
 };
 
   const nextLevel = () => {
-  setScore(score + moveRemainingBonus);
   setLevel(level + 1);
   initializeGrid();
   setMoves(MAX_MOVES);
-  setMoveRemainingBonus(0);
   setGameState('playing');
   setCompletionColor(null);
-  setShowingScore(false);
 };
 
   const renderGrid = () => (
@@ -200,65 +197,41 @@ const [showingScore, setShowingScore] = useState(false);
     </div>
   );
 
-const AnimatedNumber = ({ value, duration, onComplete }) => {
-  const [displayValue, setDisplayValue] = useState(value);
-  
-  useEffect(() => {
-    const steps = 60 * (duration / 1000); // 60 fps
-    const step = value / steps;
-
-    let current = value;
-    const timer = setInterval(() => {
-      current -= step;
-      if (current <= 0) {
-        clearInterval(timer);
-        setDisplayValue(0);
-        onComplete && onComplete();
-      } else {
-        setDisplayValue(Math.round(current));
-      }
-    }, 1000 / 60);
-
-    return () => clearInterval(timer);
-  }, [value, duration, onComplete]);
-
-  return <span>{displayValue}</span>;
-};
-
   const renderLevelComplete = () => {
-  const [animationComplete, setAnimationComplete] = useState(false);
-  const moveRemainingBonus = (MAX_MOVES - moves) * 25;
+  const moveRemainingBonus = moves * 25;
+  const newTotalScore = score + moveRemainingBonus;
+
+  useEffect(() => {
+    if (gameState === 'levelComplete') {
+      const timer = setTimeout(() => {
+        setScore(newTotalScore);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [gameState]);
 
   return (
     <AlertDialog open={gameState === 'levelComplete'}>
-      <AlertDialogContent className="bg-gray-800 text-white">
+      <AlertDialogContent className="bg-gradient-to-br from-purple-600 to-blue-700 text-white p-8 rounded-lg shadow-2xl max-w-md w-full mx-auto">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-2xl font-bold">Level {level} Complete!</AlertDialogTitle>
-          <AlertDialogDescription className="text-lg opacity-80">
-            <div className="space-y-2">
-              <p className="font-bold">Score: {score}</p>
-              {moveRemainingBonus > 0 && (
-                <p>
-                  Moves Remaining Bonus: {moves} x 25 =  
-                  <AnimatedNumber 
-                    value={moveRemainingBonus} 
-                    duration={1000}
-                    onComplete={() => setAnimationComplete(true)}
-                  />
-                </p>
-              )}
-              <p className="font-bold mt-4">
-                New Total: {animationComplete ? score + moveRemainingBonus : score}
-              </p>
+          <AlertDialogTitle className="text-4xl font-bold text-center mb-6">Level {level} Complete!</AlertDialogTitle>
+          <AlertDialogDescription className="text-xl space-y-4">
+            <div className="bg-white bg-opacity-20 p-4 rounded-lg">
+              <p className="font-semibold">Level Score: <span className="float-right">{score}</span></p>
+              <p className="font-semibold">Moves Remaining: <span className="float-right">{moves}</span></p>
+              <p className="font-semibold">Bonus: <span className="float-right">{moveRemainingBonus}</span></p>
+              <div className="border-t border-white my-2"></div>
+              <p className="font-bold text-2xl">Total Score: <span className="float-right">{newTotalScore}</span></p>
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          {animationComplete && (
-            <AlertDialogAction onClick={nextLevel} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600">
-              Next Level
-            </AlertDialogAction>
-          )}
+        <AlertDialogFooter className="mt-8 flex justify-center">
+          <AlertDialogAction 
+            onClick={nextLevel} 
+            className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-full text-lg transition-all duration-200 transform hover:scale-105"
+          >
+            Next Level
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
