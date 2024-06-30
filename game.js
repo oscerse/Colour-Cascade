@@ -173,20 +173,19 @@ const ColorCascadePuzzle = () => {
     stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
   }
 
+  checkStarCapture(newGrid);
+
   setGrid(newGrid);
   setMoves(moves - 1);
 
-  const pointsEarned = changedCells * (multiplierTurnsLeft > 0 ? 2 : 1);
-  setScore(score + pointsEarned);
-  setBaseScore(baseScore + pointsEarned);
+  const multiplier = multiplierTurnsLeft > 0 ? 2 : 1;
+  const pointsEarned = changedCells * multiplier;
+  setScore(prevScore => prevScore + pointsEarned);
+  setBaseScore(prevBaseScore => prevBaseScore + pointsEarned);
 
-  // Trigger 2x flash effect on changed cells
   if (multiplierTurnsLeft > 0) {
     triggerMultiplierFlash(changedPositions);
-  }
-
-  if (multiplierTurnsLeft > 0) {
-    setMultiplierTurnsLeft(multiplierTurnsLeft - 1);
+    setMultiplierTurnsLeft(prevTurns => prevTurns - 1);
   }
 
     if (isLevelComplete(newGrid)) {
@@ -206,28 +205,28 @@ const ColorCascadePuzzle = () => {
   };
 
   const checkStarCapture = (grid) => {
-    const starCell = grid.flat().find(cell => cell.type === CELL_TYPES.STAR);
-    if (!starCell) return;
+  const starCell = grid.flat().find(cell => cell.type === CELL_TYPES.STAR);
+  if (!starCell) return;
 
-    const [starX, starY] = grid.reduce((acc, row, y) => {
-      const x = row.findIndex(cell => cell.type === CELL_TYPES.STAR);
-      return x !== -1 ? [x, y] : acc;
-    }, [-1, -1]);
+  const [starX, starY] = grid.reduce((acc, row, y) => {
+    const x = row.findIndex(cell => cell.type === CELL_TYPES.STAR);
+    return x !== -1 ? [x, y] : acc;
+  }, [-1, -1]);
 
-    const adjacentCells = getAdjacentCells(grid, starX, starY);
-    const isCaptured = adjacentCells.every(([x, y]) => 
-      grid[y][x].type === CELL_TYPES.OBSTACLE || 
-      (grid[y][x].color === grid[0][0].color && isConnectedToStart(grid, x, y))
-    );
+  const adjacentCells = getAdjacentCells(grid, starX, starY);
+  const isCaptured = adjacentCells.every(([x, y]) => 
+    grid[y][x].type === CELL_TYPES.OBSTACLE || 
+    grid[y][x].color === grid[0][0].color
+  );
 
-    if (isCaptured) {
-      const starBonus = 150 * (multiplierTurnsLeft > 0 ? 2 : 1);
-      setScore(score + starBonus);
-      setBaseScore(baseScore + starBonus);
-      setMultiplierTurnsLeft(3);
-      grid[starY][starX].type = CELL_TYPES.NORMAL;
-    }
-  };
+  if (isCaptured) {
+    grid[starY][starX].type = CELL_TYPES.NORMAL;
+    grid[starY][starX].color = grid[0][0].color;
+    setMultiplierTurnsLeft(3);
+    setScore(prevScore => prevScore + 150);
+    setBaseScore(prevBaseScore => prevBaseScore + 150);
+  }
+};
 
   const isConnectedToStart = (grid, x, y) => {
     const startColor = grid[0][0].color;
@@ -308,16 +307,19 @@ const ColorCascadePuzzle = () => {
               </div>
             )}
             {cell.type === CELL_TYPES.STAR && (
-              <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-gray-300 animate-pulse">
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center">
+              <div className="text-4xl font-bold text-yellow-400 animate-pulse star-glow">
                 ★
               </div>
+            </div>
             )}
             {isFlashing && (
-              <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-white bg-red-500 bg-opacity-50">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-3xl font-bold text-white bg-red-500 rounded-full w-12 h-12 flex items-center justify-center animate-bounce">
                 2x
               </div>
-            )}
-          </div>
+            </div>
+          )}
         );
       })
     )}
@@ -458,6 +460,9 @@ const ColorCascadePuzzle = () => {
   .star-cell {
     box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.7);
     z-index: 10;
+  }
+  .star-glow {
+  filter: drop-shadow(0 0 5px gold);
   }
   @keyframes twinkle {
     0%, 100% { opacity: 1; }
