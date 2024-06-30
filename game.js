@@ -326,5 +326,6 @@ return (
     `}</style>
   </div>
 )
+}
 
 ReactDOM.render(<ColorCascadePuzzle />, document.getElementById('root'));
