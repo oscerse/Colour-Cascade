@@ -236,13 +236,13 @@ const AnimatedNumber = ({ value, duration, onComplete }) => {
           <AlertDialogTitle className="text-2xl font-bold">Level {level} Complete!</AlertDialogTitle>
           <AlertDialogDescription className="text-lg opacity-80">
             <div className="space-y-2">
-              <p className="font-bold">Total Score: {score}</p>
+              <p className="font-bold">Score: {score}</p>
               {moveRemainingBonus > 0 && (
                 <p>
-                  Moves Remaining Bonus: {moves} x 25 = 
+                  Moves Remaining Bonus: {moves} x 25 =  
                   <AnimatedNumber 
                     value={moveRemainingBonus} 
-                    duration={2000}
+                    duration={1000}
                     onComplete={() => setAnimationComplete(true)}
                   />
                 </p>
