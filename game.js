@@ -204,6 +204,11 @@ const ColorCascadePuzzle = () => {
     }
   };
 
+  const triggerMultiplierFlash = (positions) => {
+  setFlashingCells(positions);
+  setTimeout(() => setFlashingCells([]), 500); // Flash for 500ms
+};
+
   const checkStarCapture = (grid) => {
   const starCell = grid.flat().find(cell => cell.type === CELL_TYPES.STAR);
   if (!starCell) return;
@@ -307,19 +312,20 @@ const ColorCascadePuzzle = () => {
               </div>
             )}
             {cell.type === CELL_TYPES.STAR && (
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center">
-              <div className="text-4xl font-bold text-yellow-400 animate-pulse star-glow">
-                ★
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center">
+                <div className="text-4xl font-bold text-yellow-400 animate-pulse star-glow">
+                  ★
+                </div>
               </div>
-            </div>
             )}
             {isFlashing && (
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-3xl font-bold text-white bg-red-500 rounded-full w-12 h-12 flex items-center justify-center animate-bounce">
-                2x
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-3xl font-bold text-white bg-red-500 rounded-full w-12 h-12 flex items-center justify-center animate-bounce">
+                  2x
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         );
       })
     )}
