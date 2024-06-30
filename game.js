@@ -265,52 +265,52 @@ const ColorCascadePuzzle = () => {
   };
 
   const renderGrid = () => (
-    <div 
-      className="grid gap-0.5" 
-      style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
-    >
-      {grid.map((row, rowIndex) => 
-        row.map((cell, colIndex) => {
-          const index = rowIndex * GRID_SIZE + colIndex;
-          const completionDelay = completionColor ? (rowIndex + colIndex) * 50 : 0;
-          const fallDelay = gameOverAnimation ? ((2 * GRID_SIZE) - (rowIndex + colIndex)) * 50 : 0;
-          const showStart = index === 0 && !completionColor && !gameOverAnimation;
-          return (
-            <div 
-              key={`${rowIndex}-${colIndex}`}
-              className={`aspect-square rounded-sm relative 
-                ${index === 0 ? 'ring-2 ring-white' : ''} 
-                ${completionColor ? 'animate-flip' : ''} 
-                ${gameOverAnimation ? 'animate-fall' : ''}
-                ${cell.type === CELL_TYPES.OBSTACLE ? 'bg-gray-600' : ''}
-                ${cell.type === CELL_TYPES.STAR ? 'bg-yellow-400' : ''}
-              `}
-              style={{ 
-                backgroundColor: cell.type === CELL_TYPES.NORMAL ? cell.color : undefined,
-                animationDelay: `${completionDelay}ms, ${fallDelay}ms`,
-              }}
-            >
-              {showStart && (
-                <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                  Start
-                </div>
-              )}
-              {cell.type === CELL_TYPES.STAR && (
-                <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
-                  ★
-                </div>
-              )}
-              {multiplierTurnsLeft > 0 && (
-                <div className="absolute top-0 right-0 text-xs font-bold text-white bg-red-500 rounded-full w-4 h-4 flex items-center justify-center">
-                  2x
-                </div>
-              )}
-            </div>
-          );
-        })
-      )}
-    </div>
-  );
+  <div 
+    className="grid gap-0.5" 
+    style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
+  >
+    {grid.map((row, rowIndex) => 
+      row.map((cell, colIndex) => {
+        const index = rowIndex * GRID_SIZE + colIndex;
+        const completionDelay = completionColor ? (rowIndex + colIndex) * 50 : 0;
+        const fallDelay = gameOverAnimation ? ((2 * GRID_SIZE) - (rowIndex + colIndex)) * 50 : 0;
+        const showStart = index === 0 && !completionColor && !gameOverAnimation;
+        return (
+          <div 
+            key={`${rowIndex}-${colIndex}`}
+            className={`aspect-square rounded-sm relative 
+              ${index === 0 ? 'ring-2 ring-white' : ''} 
+              ${completionColor ? 'animate-flip' : ''} 
+              ${gameOverAnimation ? 'animate-fall' : ''}
+              ${cell.type === CELL_TYPES.OBSTACLE ? 'bg-gray-600' : ''}
+              ${cell.type === CELL_TYPES.STAR ? 'bg-yellow-400 star-cell' : ''}
+            `}
+            style={{ 
+              backgroundColor: cell.type === CELL_TYPES.NORMAL ? cell.color : undefined,
+              animationDelay: `${completionDelay}ms, ${fallDelay}ms`,
+            }}
+          >
+            {showStart && (
+              <div className="absolute inset-0 flex items-center justify-center text-xs font-bold text-white">
+                Start
+              </div>
+            )}
+            {cell.type === CELL_TYPES.STAR && (
+              <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-white animate-pulse">
+                ★
+              </div>
+            )}
+            {multiplierTurnsLeft > 0 && (
+              <div className="absolute top-0 right-0 text-xs font-bold text-white bg-red-500 rounded-full w-4 h-4 flex items-center justify-center">
+                2x
+              </div>
+            )}
+          </div>
+        );
+      })
+    )}
+  </div>
+);
 
   const renderGameInfo = () => (
     <div className="mt-4 text-center">
@@ -417,28 +417,39 @@ const ColorCascadePuzzle = () => {
         </div>
       </div>
       <style jsx="true" global="true">{`
-        .text-gradient {
-          background: linear-gradient(to right, #FF6B6B, #2ecc71, #3498db, #FED766, #8A4FFF);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        @keyframes flip {
-          0% { transform: perspective(400px) rotateY(0); }
-          100% { transform: perspective(400px) rotateY(180deg); }
-        }
-        .animate-flip {
-          animation: flip 0.6s ease-out forwards;
-          animation-delay: var(--delay, 0ms);
-        }
-        @keyframes fall {
-          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-          100% { transform: translateY(100%) rotate(20deg); opacity: 0; }
-        }
-        .animate-fall {
-          animation: fall 0.6s ease-in forwards;
-          animation-delay: var(--delay, 0ms);
-        }
-      `}</style>
+  .text-gradient {
+    background: linear-gradient(to right, #FF6B6B, #2ecc71, #3498db, #FED766, #8A4FFF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  @keyframes flip {
+    0% { transform: perspective(400px) rotateY(0); }
+    100% { transform: perspective(400px) rotateY(180deg); }
+  }
+  .animate-flip {
+    animation: flip 0.6s ease-out forwards;
+    animation-delay: var(--delay, 0ms);
+  }
+  @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100%) rotate(20deg); opacity: 0; }
+  }
+  .animate-fall {
+    animation: fall 0.6s ease-in forwards;
+    animation-delay: var(--delay, 0ms);
+  }
+  .star-cell {
+    box-shadow: 0 0 15px 5px rgba(255, 215, 0, 0.7);
+    z-index: 10;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+  .star-cell > div {
+    animation: twinkle 1.5s infinite ease-in-out;
+  }
+`}</style>
     </div>
   );
 };
