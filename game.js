@@ -52,6 +52,7 @@ const ColorCascadePuzzle = () => {
   const [moveRemainingBonus, setMoveRemainingBonus] = useState(0);
   const [showingScore, setShowingScore] = useState(false);
   const [multiplierTurnsLeft, setMultiplierTurnsLeft] = useState(0);
+  const [flashingCells, setFlashingCells] = useState([]);
   const containerRef = useRef(null);
 
   const initializeGrid = () => {
@@ -141,42 +142,52 @@ const ColorCascadePuzzle = () => {
   }, [gameState, grid]);
 
   const floodFill = (newColor) => {
-    if (moves <= 0) return;
+  if (moves <= 0) return;
 
-    const startColor = grid[0][0].color;
-    if (startColor === newColor) return;
+  const startColor = grid[0][0].color;
+  if (startColor === newColor) return;
 
-    const newGrid = grid.map(row => row.map(cell => ({...cell})));
-    const stack = [[0, 0]];
-    let changedCells = 0;
+  const newGrid = grid.map(row => row.map(cell => ({...cell})));
+  const stack = [[0, 0]];
+  let changedCells = 0;
+  let changedPositions = [];
 
-    while (stack.length > 0) {
-      const [x, y] = stack.pop();
+  while (stack.length > 0) {
+    const [x, y] = stack.pop();
 
-      if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE || 
-          newGrid[y][x].type === CELL_TYPES.OBSTACLE || 
-          newGrid[y][x].color !== startColor) {
-        continue;
-      }
-
-      newGrid[y][x].color = newColor;
-      changedCells++;
-
-      stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+    if (x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE || 
+        newGrid[y][x].type === CELL_TYPES.OBSTACLE || 
+        newGrid[y][x].color !== startColor) {
+      continue;
     }
 
-    setGrid(newGrid);
-    setMoves(moves - 1);
+    newGrid[y][x].color = newColor;
+    changedCells++;
+    changedPositions.push([x, y]);
 
-    const pointsEarned = changedCells * (multiplierTurnsLeft > 0 ? 2 : 1);
-    setScore(score + pointsEarned);
-    setBaseScore(baseScore + pointsEarned);
-
-    checkStarCapture(newGrid);
-
-    if (multiplierTurnsLeft > 0) {
-      setMultiplierTurnsLeft(multiplierTurnsLeft - 1);
+    if (newGrid[y][x].type === CELL_TYPES.STAR) {
+      newGrid[y][x].type = CELL_TYPES.NORMAL;
+      setMultiplierTurnsLeft(3);
     }
+
+    stack.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+
+  setGrid(newGrid);
+  setMoves(moves - 1);
+
+  const pointsEarned = changedCells * (multiplierTurnsLeft > 0 ? 2 : 1);
+  setScore(score + pointsEarned);
+  setBaseScore(baseScore + pointsEarned);
+
+  // Trigger 2x flash effect on changed cells
+  if (multiplierTurnsLeft > 0) {
+    triggerMultiplierFlash(changedPositions);
+  }
+
+  if (multiplierTurnsLeft > 0) {
+    setMultiplierTurnsLeft(multiplierTurnsLeft - 1);
+  }
 
     if (isLevelComplete(newGrid)) {
       setCompletionColor(newColor);
@@ -275,6 +286,7 @@ const ColorCascadePuzzle = () => {
         const completionDelay = completionColor ? (rowIndex + colIndex) * 50 : 0;
         const fallDelay = gameOverAnimation ? ((2 * GRID_SIZE) - (rowIndex + colIndex)) * 50 : 0;
         const showStart = index === 0 && !completionColor && !gameOverAnimation;
+        const isFlashing = flashingCells.some(([x, y]) => x === colIndex && y === rowIndex);
         return (
           <div 
             key={`${rowIndex}-${colIndex}`}
@@ -296,12 +308,12 @@ const ColorCascadePuzzle = () => {
               </div>
             )}
             {cell.type === CELL_TYPES.STAR && (
-              <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-white animate-pulse">
+              <div className="absolute inset-0 flex items-center justify-center text-3xl font-bold text-gray-300 animate-pulse">
                 ★
               </div>
             )}
-            {multiplierTurnsLeft > 0 && (
-              <div className="absolute top-0 right-0 text-xs font-bold text-white bg-red-500 rounded-full w-4 h-4 flex items-center justify-center">
+            {isFlashing && (
+              <div className="absolute inset-0 flex items-center justify-center text-2xl font-bold text-white bg-red-500 bg-opacity-50">
                 2x
               </div>
             )}
@@ -313,30 +325,35 @@ const ColorCascadePuzzle = () => {
 );
 
   const renderGameInfo = () => (
-    <div className="mt-4 text-center">
-      <div className="flex justify-between mb-4">
-        <div className="text-left">
-          <p className="text-xl font-bold">Level: {level}</p>
-          <p className="text-lg">Move(s) left: {moves}</p>
-        </div>
-        <div className="text-right">
-          <p className="text-xl font-bold">Score: {score}</p>
-          <p className="text-lg">High Score: {highScore}</p>
-        </div>
+  <div className="mt-4 text-center">
+    <div className="flex justify-between mb-4">
+      <div className="text-left">
+        <p className="text-xl font-bold">Level: {level}</p>
+        <p className="text-lg">Move(s) left: {moves}</p>
       </div>
-      <div className="flex justify-center space-x-2 mb-4">
-        {COLORS.map((color, index) => (
-          <button 
-            key={color} 
-            className="w-10 h-10 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-white transition-transform duration-200 hover:scale-110 active:scale-90"
-            style={{ backgroundColor: color }}
-            onClick={() => floodFill(color)}
-          />
-        ))}
+      <div className="text-right">
+        <p className="text-xl font-bold">Score: {score}</p>
+        <p className="text-lg">High Score: {highScore}</p>
       </div>
-      <p className="text-sm opacity-70">Press R, G, B, Y, P keys to play</p>
     </div>
-  );
+    {multiplierTurnsLeft > 0 && (
+      <div className="mb-4 text-lg font-bold text-yellow-400">
+        2x Multiplier Active! {multiplierTurnsLeft} turn{multiplierTurnsLeft > 1 ? 's' : ''} remaining
+      </div>
+    )}
+    <div className="flex justify-center space-x-2 mb-4">
+      {COLORS.map((color, index) => (
+        <button 
+          key={color} 
+          className="w-10 h-10 rounded-full shadow-lg focus:outline-none focus:ring-2 focus:ring-white transition-transform duration-200 hover:scale-110 active:scale-90"
+          style={{ backgroundColor: color }}
+          onClick={() => floodFill(color)}
+        />
+      ))}
+    </div>
+    <p className="text-sm opacity-70">Press R, G, B, Y, P keys to play</p>
+  </div>
+);
 
   const renderMenu = () => (
     <div className="flex flex-col items-center justify-center h-full">
