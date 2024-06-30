@@ -288,43 +288,33 @@ const AnimatedNumber = ({ value, duration, onComplete }) => {
   );
 
   return (
-  <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
-    <div ref={containerRef} className="w-full max-w-3xl aspect-square">
-      <div className="p-4 rounded-lg shadow-2xl bg-gray-800 border border-gray-700 h-full flex flex-col">
-        {gameState === 'menu' ? renderMenu() : (
-          <>
-            <div className="flex-grow">{renderGrid()}</div>
-            {renderGameInfo()}
-          </>
-        )}
-        {renderLevelComplete()}
-        {renderGameOver()}
-      </div>
+    <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white p-4">
+      {/* ... rest of your JSX ... */}
+      <style jsx global>{`
+        .text-gradient {
+          background: linear-gradient(to right, #FF6B6B, #2ecc71, #3498db, #FED766, #8A4FFF);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+        @keyframes flip {
+          0% { transform: perspective(400px) rotateY(0); }
+          100% { transform: perspective(400px) rotateY(180deg); }
+        }
+        .animate-flip {
+          animation: flip 0.6s ease-out forwards;
+          animation-delay: var(--delay, 0ms);
+        }
+        @keyframes fall {
+          0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100%) rotate(20deg); opacity: 0; }
+        }
+        .animate-fall {
+          animation: fall 0.6s ease-in forwards;
+          animation-delay: var(--delay, 0ms);
+        }
+      `}</style>
     </div>
-    <style jsx global>{`
-      .text-gradient {
-        background: linear-gradient(to right, #FF6B6B, #2ecc71, #3498db, #FED766, #8A4FFF);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-      @keyframes flip {
-        0% { transform: perspective(400px) rotateY(0); }
-        100% { transform: perspective(400px) rotateY(180deg); }
-      }
-      .animate-flip {
-        animation: flip 0.6s ease-out forwards;
-        animation-delay: var(--delay, 0ms);
-      }
-      @keyframes fall {
-        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-        100% { transform: translateY(100%) rotate(20deg); opacity: 0; }
-      }
-      .animate-fall {
-        animation: fall 0.6s ease-in forwards;
-        animation-delay: var(--delay, 0ms);
-      }
-    `}</style>
-  </div>
-);
+  )
+}
 
 ReactDOM.render(<ColorCascadePuzzle />, document.getElementById('root'));
