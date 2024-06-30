@@ -184,9 +184,10 @@ const ColorCascadePuzzle = () => {
   setBaseScore(prevBaseScore => prevBaseScore + pointsEarned);
 
   if (multiplierTurnsLeft > 0) {
-    triggerMultiplierFlash(changedPositions);
-    setMultiplierTurnsLeft(prevTurns => prevTurns - 1);
-  }
+  setFlashingCells(changedPositions);
+  setTimeout(() => setFlashingCells([]), 300); // Flash for 300ms
+  setMultiplierTurnsLeft(prevTurns => prevTurns - 1);
+}
 
     if (isLevelComplete(newGrid)) {
       setCompletionColor(newColor);
@@ -312,19 +313,19 @@ const ColorCascadePuzzle = () => {
               </div>
             )}
             {cell.type === CELL_TYPES.STAR && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-300 to-gray-500 flex items-center justify-center">
-                <div className="text-4xl font-bold text-yellow-400 animate-pulse star-glow">
-                  ★
-                </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-4xl font-bold text-yellow-400 animate-pulse star-glow">
+                ★
               </div>
-            )}
+            </div>
+          )}
             {isFlashing && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-3xl font-bold text-white bg-red-500 rounded-full w-12 h-12 flex items-center justify-center animate-bounce">
-                  2x
-                </div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-xl font-bold text-white animate-fadeIn">
+                2x
               </div>
-            )}
+            </div>
+          )}
           </div>
         );
       })
@@ -477,6 +478,13 @@ const ColorCascadePuzzle = () => {
   .star-cell > div {
     animation: twinkle 1.5s infinite ease-in-out;
   }
+  @keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
 `}</style>
     </div>
   );
